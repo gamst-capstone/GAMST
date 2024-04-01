@@ -24,9 +24,9 @@ class Caption(models.Model):
     )
     video = models.ForeignKey(Video, on_delete=models.CASCADE)
     frame_number = models.IntegerField()
-    sentence = models.TextField()
-    detected_object = models.TextField()
-    sentiment_result = models.CharField(max_length=1, choices=SENTIMENT_CHOICES, default='U')
+    original_sentence = models.TextField(null=True)
+    cropped_sentence = models.TextField(null=True)
+    sentiment_result = models.CharField(max_length=1, choices=SENTIMENT_CHOICES, default='U', null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
