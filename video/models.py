@@ -17,12 +17,17 @@ class Video(models.Model):
     
 
 class Caption(models.Model):
+    SENTIMENT_CHOICES = (
+        ('P', 'Positive'),
+        ('N', 'Negative'),
+        ('U', 'Unknown'),
+    )
     video = models.ForeignKey(Video, on_delete=models.CASCADE)
     frame_number = models.IntegerField()
     sentence = models.TextField()
     detected_object = models.TextField()
+    sentiment_result = models.CharField(max_length=1, choices=SENTIMENT_CHOICES, default='U')
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.text
