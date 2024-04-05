@@ -2,6 +2,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser
 from rest_framework import status
+from django.http import StreamingHttpResponse
 
 from .models import Video, Caption
 from .serializers import VideoSerializer, CaptionSerializer
@@ -110,7 +111,14 @@ def upload_to_s3(file, file_uid, bucket):
     )
 
     try:
-        res = s3.upload_fileobj(file, bucket, file_uid)
+        res = s3.upload_fileobj(
+            file,
+            bucket,
+            file_uid,
+            ExtraArgs={
+                "ContentType": file.content_type
+            }
+        )
         file_url = f"https://{bucket}.s3.amazonaws.com/{file_uid}"
         return {
             'video_url': file_url,
@@ -192,5 +200,40 @@ class InsertCaption(APIView):
             )
             serializer = CaptionSerializer(caption)
             return Response(serializer.data)
+        except Exception as e:
+            return Response({'Error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+
+
+class StreamRiskList(APIView):
+    @swagger_auto_schema(
+        operation_description='List stream risk',
+        manual_parameters=[
+            openapi.Parameter(
+                'video_id',
+                openapi.IN_QUERY,
+                description='video id',
+                type=openapi.TYPE_INTEGER,
+                required=True,
+            )
+        ],
+        responses={
+            200: 'Success',
+            400: 'Bad Request',
+        }
+    )
+    def get_objects(self):
+        pass
+
+    def generate_object(self):
+        while True:
+            object_list = self.get_objects()
+            yield f"data: {object_list}\n\n"
+
+    def get(self, request, pk):
+        try:
+            response = StreamingHttpResponse(self.generate_object(), content_type='text/event-stream')
+            response['Cache-Control'] = 'no-cache'
+            response['Connection'] = 'keep-alive'
         except Exception as e:
             return Response({'Error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
