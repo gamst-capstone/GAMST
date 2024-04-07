@@ -1,6 +1,7 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser
+from rest_framework.pagination import PageNumberPagination
 from rest_framework import status
 from django.http import StreamingHttpResponse
 
@@ -19,11 +20,16 @@ def index(request):
     return Response(context, status=status.HTTP_200_OK)
 
 class ListVideo(APIView):
+    paginator_class = PageNumberPagination
     def get(self, request):
-        videos = Video.objects.all()
-        serializer = VideoSerializer(videos, many=True)
-        return Response(serializer.data)
-
+        try:
+            queryset = Video.objects.all().order_by('id')
+            paginator = self.paginator_class()
+            results = paginator.paginate_queryset(queryset, request)
+            serializer = VideoSerializer(results, many=True)
+            return paginator.get_paginated_response(serializer.data)
+        except Exception as e:
+            return Response({'Error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class UploadVideo(APIView):
     parser_classes = (MultiPartParser,)
@@ -132,6 +138,8 @@ def upload_to_s3(file, file_uid, bucket):
     
 
 class ListCaption(APIView):
+    pagination_class = PageNumberPagination
+    
     @swagger_auto_schema(
         operation_description='List captions',
         manual_parameters=[
@@ -146,13 +154,15 @@ class ListCaption(APIView):
         responses={
             200: 'Success',
             400: 'Bad Request',
-        }
+        }   
     )
     def get(self, request, pk):
         try:
-            captions = Caption.objects.filter(video=pk).order_by('frame_number')
-            serializer = CaptionSerializer(captions, many=True)
-            return Response(serializer.data)
+            queryset = Caption.objects.filter(video=pk).order_by('frame_number')
+            paginator = self.pagination_class()
+            results = paginator.paginate_queryset(queryset, request)
+            serializer = CaptionSerializer(results, many=True)
+            return paginator.get_paginated_response(serializer.data)
         except Exception as e:
             return Response({'Error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
     
