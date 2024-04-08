@@ -31,3 +31,10 @@ class Caption(models.Model):
 
     def __str__(self):
         return self.text
+    
+
+class RiskySection(models.Model):
+    video = models.ForeignKey(Video, on_delete=models.CASCADE)
+    start_frame = models.IntegerField()
+    end_frame = models.IntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
