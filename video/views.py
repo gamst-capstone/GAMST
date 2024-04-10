@@ -2,17 +2,21 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.renderers import JSONRenderer
 from rest_framework import status
-from django.http import StreamingHttpResponse
+from django.http import HttpResponse, StreamingHttpResponse
 
-from .models import Video, Caption
+from .models import Video, Caption, RiskySection
 from .serializers import VideoSerializer, CaptionSerializer
 from config.settings import AWS_ACCESS_KEY, AWS_SECRET_ACCESS_KEY, VIDEO_BUCKET
+from .sse_render import ServerSentEventRenderer
 
-import boto3, uuid
+import boto3, uuid, asyncio, time
 from rest_framework.decorators import api_view
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+from asgiref.sync import sync_to_async
+
 
 @api_view(['GET'])
 def index(request):
@@ -216,6 +220,7 @@ class InsertCaption(APIView):
 
 
 class StreamRiskList(APIView):
+    renderer_classes = [ServerSentEventRenderer]
     @swagger_auto_schema(
         operation_description='List stream risk',
         manual_parameters=[
@@ -232,18 +237,54 @@ class StreamRiskList(APIView):
             400: 'Bad Request',
         }
     )
-    def get_objects(self):
-        pass
+    
+    # 마지막에 추가된 row 반환
+    @sync_to_async
+    def get_queryset(self):
+        return RiskySection.objects.filter(video=self.kwargs['pk']).values()
 
-    def generate_object(self):
+    async def get_objects(self):
+        await asyncio.sleep(1)
+        queryset = await self.get_queryset()
+        # result = RiskySection.objects.filter(video=self.kwargs['pk']).last()
+        result = await sync_to_async(queryset.last)()
+        if result:
+            print(result)
+            return result
+        else:
+            print('no result')
+            return {}
+
+    async def generate_object(self):
+        cnt = 0
         while True:
-            object_list = self.get_objects()
-            yield f"data: {object_list}\n\n"
+            object = await self.get_objects()
+            cnt += 1
+            if cnt == 10:
+                break
+            yield f"data: {object}\n\n"
 
     def get(self, request, pk):
         try:
             response = StreamingHttpResponse(self.generate_object(), content_type='text/event-stream')
             response['Cache-Control'] = 'no-cache'
             response['Connection'] = 'keep-alive'
+            return response
         except Exception as e:
             return Response({'Error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    
+import random
+from django.shortcuts import render
+async def sse_stream(request):
+    async def event_stream():
+        test = ['a','b','c','d','e']
+        i=0
+        while True:
+            yield f'data: {random.choice(test)} {i}\n\n'
+            i+=1
+            await asyncio.sleep(1)
+    return StreamingHttpResponse(event_stream(), content_type='text/event-stream')
+
+def sse_test(request):
+    return render(request, 'sse.html')

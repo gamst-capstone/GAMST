@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SSE</title>
+</head>
+<body>
+<h1>Server Sent Events</h1>
+<div id="sse-data"></div>
+<button onclick="startSSE()">Start</button>
+<button onclick="stopSSE()" disabled>Stop</button>
+
+<div id="sse-data1"></div>
+<button onclick="startSSE1()">Start</button>
+<button onclick="stopSSE1()" disabled>Stop</button>
+
+<script>
+    let eventSource;
+    const sseData = document.getElementById('sse-data');
+    const sseData1 = document.getElementById('sse-data1');
+
+    function startSSE() {
+        eventSource = new EventSource('/video/stream/6');
+        eventSource.onmessage = event => sseData.innerHTML += event.data + '<br>';
+        document.querySelector('button[onclick="startSSE()"]').disabled = true;
+        document.querySelector('button[onclick="stopSSE()"]').disabled = false;
+    }
+
+    function stopSSE() {
+        if (eventSource) {
+eventSource.close();
+        }
+        document.querySelector('button[onclick="startSSE()"]').disabled = false;
+        document.querySelector('button[onclick="stopSSE()"]').disabled = true;
+    }
+
+
+    function startSSE1() {
+        eventSource = new EventSource('/video/stream/test/');
+        eventSource.onmessage = event => sseData1.innerHTML += event.data + '<br>';
+        document.querySelector('button[onclick="startSSE1()"]').disabled = true;
+        document.querySelector('button[onclick="stopSSE1()"]').disabled = false;
+    }
+
+    function stopSSE1() {
+        if (eventSource) {
+eventSource.close();
+        }
+        document.querySelector('button[onclick="startSSE1()"]').disabled = false;
+        document.querySelector('button[onclick="stopSSE1()"]').disabled = true;
+    }
+</script>
+</body>
+</html>
+
