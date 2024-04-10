@@ -35,6 +35,7 @@ class Caption(models.Model):
 
 class RiskySection(models.Model):
     video = models.ForeignKey(Video, on_delete=models.CASCADE)
+    video_uid = models.TextField(null=True)
     start_frame = models.IntegerField()
     end_frame = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
