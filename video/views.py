@@ -2,16 +2,15 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.renderers import JSONRenderer
 from rest_framework import status
-from django.http import HttpResponse, StreamingHttpResponse
+from django.http import StreamingHttpResponse
 
 from .models import Video, Caption, RiskySection
 from .serializers import VideoSerializer, CaptionSerializer
 from config.settings import AWS_ACCESS_KEY, AWS_SECRET_ACCESS_KEY, VIDEO_BUCKET
 from .sse_render import ServerSentEventRenderer
 
-import boto3, uuid, asyncio, time
+import boto3, uuid, asyncio
 from rest_framework.decorators import api_view
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
@@ -237,32 +236,41 @@ class StreamRiskList(APIView):
             400: 'Bad Request',
         }
     )
-    
+
     # 마지막에 추가된 row 반환
     @sync_to_async
-    def get_queryset(self):
-        return RiskySection.objects.filter(video=self.kwargs['pk']).values()
+    def get_queryset(self, last_object_id):
+        if not last_object_id:
+            queryset = RiskySection.objects.filter(
+                video=self.kwargs['pk']
+            ).order_by('id').values().first()
+            print(f">>>>>>>> first row of {self.kwargs['pk']}")
+        else:
+            queryset = RiskySection.objects.filter(
+                video=self.kwargs['pk'],
+                id=last_object_id,
+                ).order_by('id').values().last()
+            print(f">>>>>>>> {self.kwargs['pk']} / {last_object_id}")
+        return queryset
 
-    async def get_objects(self):
+    async def get_objects(self, last_object_id):
         await asyncio.sleep(1)
-        queryset = await self.get_queryset()
+        result = await self.get_queryset(last_object_id)
         # result = RiskySection.objects.filter(video=self.kwargs['pk']).last()
-        result = await sync_to_async(queryset.last)()
         if result:
-            print(result)
+            print(f"{result} / {last_object_id}")
             return result
         else:
             print('no result')
             return {}
 
     async def generate_object(self):
-        cnt = 0
+        last_object_id = None
         while True:
-            object = await self.get_objects()
-            cnt += 1
-            if cnt == 10:
-                break
-            yield f"data: {object}\n\n"
+            object = await self.get_objects(last_object_id)
+            if object:
+                yield f"data: {object}\n\n"
+                last_object_id = object['id'] + 1
 
     def get(self, request, pk):
         try:
