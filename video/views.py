@@ -1,9 +1,10 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.parsers import MultiPartParser
+from rest_framework.parsers import MultiPartParser, JSONParser, FormParser
 from rest_framework.pagination import PageNumberPagination
 from rest_framework import status
 from django.http import StreamingHttpResponse
+from django.shortcuts import render
 
 from .models import Video, Caption, RiskySection
 from .serializers import VideoSerializer, CaptionSerializer
@@ -142,13 +143,13 @@ def upload_to_s3(file, file_uid, bucket):
 
 class ListCaption(APIView):
     pagination_class = PageNumberPagination
-    
+    parser_classes = (FormParser,)
     @swagger_auto_schema(
         operation_description='List captions',
         manual_parameters=[
             openapi.Parameter(
                 'video_id',
-                openapi.IN_QUERY,
+                openapi.IN_PATH,
                 description='video id',
                 type=openapi.TYPE_INTEGER,
                 required=True,
@@ -168,64 +169,17 @@ class ListCaption(APIView):
             return paginator.get_paginated_response(serializer.data)
         except Exception as e:
             return Response({'Error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-    
-
-class InsertCaption(APIView):
-    @swagger_auto_schema(
-        operation_description='Insert caption',
-        manual_parameters=[
-            openapi.Parameter(
-                'video_url',
-                openapi.IN_FORM,
-                description='video url',
-                type=openapi.TYPE_STRING,
-                required=True,
-            ),
-            openapi.Parameter(
-                'frame_number',
-                openapi.IN_FORM,
-                description='frame number',
-                type=openapi.TYPE_INTEGER,
-                required=True,
-            ),
-            openapi.Parameter(
-                'sentence',
-                openapi.IN_FORM,
-                description='sentence',
-                type=openapi.TYPE_STRING,
-                required=True,
-            )
-        ],
-        responses={
-            200: 'Success',
-            400: 'Bad Request',
-        }
-    )
-    def post(self, request):
-        try:
-            video = Video.objects.get(url=request.data.get('video_url'))
-
-            caption = Caption.objects.create(
-                video=video,  # 여기서 video 객체를 찾아서 저장해야 
-                frame_number=request.data.get('frame_number'),
-                sentence=request.data.get('sentence'),
-                detected_object=request.data.get('detected_object')
-            )
-            serializer = CaptionSerializer(caption)
-            return Response(serializer.data)
-        except Exception as e:
-            return Response({'Error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        
-
+         
 
 class StreamRiskList(APIView):
     renderer_classes = [ServerSentEventRenderer]
+
     @swagger_auto_schema(
         operation_description='List stream risk',
         manual_parameters=[
             openapi.Parameter(
                 'video_id',
-                openapi.IN_QUERY,
+                openapi.IN_PATH,
                 description='video id',
                 type=openapi.TYPE_INTEGER,
                 required=True,
