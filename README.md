@@ -9,3 +9,14 @@ BERT 모델을 통한 CCTV 영상 위험 분석 보조 시스템
 
 [Model Workload Repo](https://github.com/omoknooni/GAMST-model-workflow)
 
+## Install
+- Requirements : Python3.10+
+```
+python -m venv venv
+
+source ./venv/bin/activate
+
+pip install -r requirements.txt
+
+python manage.py runserver
+```
