@@ -9,6 +9,7 @@ from config import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('user/', include('user.urls')),
     path('video/',include('video.urls')),
 ]
 

@@ -2,6 +2,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, JSONParser, FormParser
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from django.http import StreamingHttpResponse
 from django.shortcuts import render
@@ -22,6 +23,11 @@ from asgiref.sync import sync_to_async
 def index(request):
     context = {'message': "Health good"}
     return Response(context, status=status.HTTP_200_OK)
+
+class AuthTestView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request):
+        return Response({'message': 'Authenticated'}, status=status.HTTP_200_OK)
 
 class ListVideo(APIView):
     paginator_class = PageNumberPagination

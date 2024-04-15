@@ -12,4 +12,6 @@ urlpatterns = [
     path('<int:pk>/stream/', views.StreamRiskList.as_view()),
     path('sse/', views.sse_test, name='sse_test'),
     path('stream/test/', views.sse_stream, name='sse_stream'),
+
+    path('test/', views.AuthTestView.as_view(), name='test'),
 ]
