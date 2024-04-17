@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     # app
     'video',
     'user',
+    'camera',
 ]
 
 MIDDLEWARE = [
