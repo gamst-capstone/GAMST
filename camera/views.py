@@ -40,6 +40,21 @@ class ListCamera(APIView):
             return Response({'Error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
 class CreateCamera(APIView):
+    @swagger_auto_schema(
+        operation_description='Create Camera',
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['name', 'url'],
+            properties={
+                'name': openapi.Schema(type=openapi.TYPE_STRING),
+                'url': openapi.Schema(type=openapi.TYPE_STRING),
+            }
+        ),
+        responses={
+            200: 'Success',
+            400: 'Bad Request',
+        }
+    )
     def post(self, request):
         try:
             camera_name = request.data.get('name')
@@ -87,9 +102,9 @@ class DetailCamera(APIView):
             404: "Camera not found",
         },
     )
-    def get(self, request, camera_id):
+    def get(self, request, pk):
         try:
-            camera = Camera.objects.get(id=camera_id)
+            camera = Camera.objects.get(id=pk)
             serializer = CameraSerializer(camera)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Camera.DoesNotExist:
@@ -100,7 +115,6 @@ class DetailCamera(APIView):
 
 class ListCaption(APIView):
     pagination_class = PageNumberPagination
-    parser_classes = (FormParser,)
     @swagger_auto_schema(
         operation_description='List captions',
         manual_parameters=[
@@ -119,7 +133,7 @@ class ListCaption(APIView):
     )
     def get(self, request, pk):
         try:
-            queryset = Caption.objects.filter(video=pk).order_by('frame_number')
+            queryset = Caption.objects.filter(video=pk).order_by('start_time')
             paginator = self.pagination_class()
             results = paginator.paginate_queryset(queryset, request)
             serializer = CaptionSerializer(results, many=True)
