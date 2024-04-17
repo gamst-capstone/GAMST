@@ -10,7 +10,7 @@ from django.shortcuts import render
 from .models import Video, Caption, RiskySection
 from .serializers import VideoSerializer, CaptionSerializer
 from config.settings import AWS_ACCESS_KEY, AWS_SECRET_ACCESS_KEY, VIDEO_BUCKET
-from .sse_render import ServerSentEventRenderer
+from config.sse_render import ServerSentEventRenderer
 
 import boto3, uuid, asyncio
 from rest_framework.decorators import api_view
