@@ -22,7 +22,7 @@
     
     function startSSE() {
         let streamNumber = document.getElementById('streamNumber').value;
-        eventSource = new EventSource('/video/stream/' + streamNumber);
+        eventSource = new EventSource('/video/' + streamNumber + '/stream/');
         eventSource.onmessage = event => sseData.innerHTML += event.data + '<br>';
         document.querySelector('button[onclick="startSSE()"]').disabled = true;
         document.querySelector('button[onclick="stopSSE()"]').disabled = false;
