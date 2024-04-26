@@ -8,7 +8,7 @@ from django.http import StreamingHttpResponse
 from django.shortcuts import render
 
 from .models import Video, Caption, RiskySection
-from .serializers import VideoSerializer, CaptionSerializer
+from .serializers import VideoSerializer, CaptionSerializer, RiskSerializer
 from config.settings import AWS_ACCESS_KEY, AWS_SECRET_ACCESS_KEY, VIDEO_BUCKET
 from config.sse_render import ServerSentEventRenderer
 
@@ -241,7 +241,37 @@ class StreamRiskList(APIView):
         except Exception as e:
             return Response({'Error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-    
+class ListRiskList(APIView):
+    pagination_class = PageNumberPagination
+    @swagger_auto_schema(
+        operation_description='List risk',
+        manual_parameters=[
+            openapi.Parameter(
+                'video_id',
+                openapi.IN_PATH,
+                description='video id',
+                type=openapi.TYPE_INTEGER,
+                required=True,
+            )
+        ],
+        responses={
+            200: 'Success',
+            400: 'Bad Request',
+        }
+    )
+    def get(self, request, pk):
+        try:
+            queryset = RiskySection.objects.filter(video=pk).order_by('id')
+            paginator = self.pagination_class()
+            results = paginator.paginate_queryset(queryset, request)
+            serializer = RiskSerializer(results, many=True)
+            return paginator.get_paginated_response(serializer.data)
+        except Exception as e:
+            return Response({'Error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
 import random
 from django.shortcuts import render
 async def sse_stream(request):

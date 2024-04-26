@@ -10,3 +10,8 @@ class CaptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Caption
         fields = '__all__'
+
+class RiskSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RiskySection
+        fields = '__all__'
