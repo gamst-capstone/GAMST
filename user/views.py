@@ -2,13 +2,12 @@ from rest_framework import status
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import Token
 
 from .serializers import UserRegisterSerializer, UserLoginSerializer
-from django.contrib.auth.models import User
-
+from .models import User
 class UserRegisterView(APIView):
     def post(self, request: Request) -> Response:
         serializer = UserRegisterSerializer(data=request.data)
@@ -34,16 +33,20 @@ class UserLoginView(APIView):
             user = token_serializer.user
             print(user)
             serializer = UserLoginSerializer(user)
-            return Response({
+            res = Response({
                 "user": serializer.data,
                 "message": "User logged in successfully",
                 "token": token_serializer.validated_data,
             }, status=status.HTTP_200_OK)
+            
+            res.set_cookie('refresh_token', str(token_serializer.validated_data['refresh']))
+            res.set_cookie('access_token', str(token_serializer.validated_data['access']))
+            return res 
         return Response(token_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 
 class UserList(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUser]
     def get(self, request):
         users = User.objects.all()
         serializer = UserLoginSerializer(users, many=True)
