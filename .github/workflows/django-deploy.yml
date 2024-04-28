@@ -20,7 +20,7 @@ jobs:
                 aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
             - name: Add Ip to SG
               run: |
-                aws ec2 authorize-security-group-ingress --group-id ${{ secrets.AWS_SG_ID }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ip4 }}/32
+                aws ec2 authorize-security-group-ingress --group-id ${{ secrets.AWS_SG_ID }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
             - name: Connect to EC2
               uses: appleboy/ssh-action@master
               with:
@@ -40,6 +40,6 @@ jobs:
 
             - name: Revoke IP from SG
               run: |
-                aws ec2 revoke-security-group-ingress --group-id ${{ secrets.AWS_SG_ID }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ip4 }}/32
+                aws ec2 revoke-security-group-ingress --group-id ${{ secrets.AWS_SG_ID }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
 
     
