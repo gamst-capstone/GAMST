@@ -1,0 +1,45 @@
+name: django deploy
+
+on:
+    push:
+        branches:
+            - main
+jobs:
+    deploy:
+        name: Deploy django project to EC2
+        runs-on: ubuntu-latest
+        steps:
+            - name: Get Github Actions IP
+              id: ip
+              uses: haythem/public-ip@v1.3
+            - name: Configure AWS Credentials
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                aws-region: ap-northeast-2
+                aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            - name: Add Ip to SG
+              run: |
+                aws ec2 authorize-security-group-ingress --group-id ${{ secrets.AWS_SG_ID }} --protocol tcp --port 22 --cidr ${{ steps.outputs.ip4 }}/32
+            - name: Connect to EC2
+              uses: appleboy/ssh-actions@master
+              with:
+                host: ${{ secrets.REMOTE_IP }}
+                username: ${{ secrets.REMOTE_SSH_USERNAME }}
+                key: ${{ secrets.REMOTE_SSH_PRIVKEY }}
+                script_stop: true
+                script: |
+                    sudo su
+                    whoami
+                    cd /home/ubuntu/GAMST
+                    source ./venv/bin/activate
+                    pip install -r requirements.txt
+                    git pull origin main
+                    pkill -f runserver
+                    nohup python manage.py runserver 0.0.0.0:8000 & 
+
+            - name: Revoke IP from SG
+              run: |
+                aws ec2 revoke-security-group-ingress --group-id ${{ secrets.AWS_SG_ID }} --protocol tcp --port 22 --cidr ${{ steps.outputs.ip4 }}/32
+
+    
