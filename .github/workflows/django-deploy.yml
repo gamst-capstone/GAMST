@@ -22,7 +22,7 @@ jobs:
               run: |
                 aws ec2 authorize-security-group-ingress --group-id ${{ secrets.AWS_SG_ID }} --protocol tcp --port 22 --cidr ${{ steps.outputs.ip4 }}/32
             - name: Connect to EC2
-              uses: appleboy/ssh-actions@master
+              uses: appleboy/ssh-action@master
               with:
                 host: ${{ secrets.REMOTE_IP }}
                 username: ${{ secrets.REMOTE_SSH_USERNAME }}
