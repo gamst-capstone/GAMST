@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.urls import path, include, re_path
+from django.views.static import serve
 
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
@@ -12,8 +13,8 @@ urlpatterns = [
     path('user/', include('user.urls')),
     path('video/',include('video.urls')),
     path('camera/', include('camera.urls')),
-]
-
+    re_path(r'^static/(?P<path>.*)$', serve, {'document_root': settings.STATIC_ROOT}, name='static')
+] 
 
 schema_view = get_schema_view(
     openapi.Info(
