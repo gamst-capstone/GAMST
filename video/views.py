@@ -204,13 +204,13 @@ class StreamRiskList(APIView):
             queryset = RiskySection.objects.filter(
                 video=self.kwargs['pk']
             ).order_by('id').values().first()
-            print(f">>>>>>>> first row of {self.kwargs['pk']}")
+            # print(f">>>>>>>> first row of {self.kwargs['pk']}")
         else:
             queryset = RiskySection.objects.filter(
                 video=self.kwargs['pk'],
                 id=last_object_id,
                 ).order_by('id').values().last()
-            print(f">>>>>>>> {self.kwargs['pk']} / {last_object_id}")
+            # print(f">>>>>>>> {self.kwargs['pk']} / {last_object_id}")
         return queryset
 
     async def get_objects(self, last_object_id):
@@ -218,10 +218,10 @@ class StreamRiskList(APIView):
         result = await self.get_queryset(last_object_id)
         # result = RiskySection.objects.filter(video=self.kwargs['pk']).last()
         if result:
-            print(f"{result} / {last_object_id}")
+            # print(f"{result} / {last_object_id}")
             return result
         else:
-            print('no result')
+            # print('no result')
             return {}
 
     async def generate_object(self):
