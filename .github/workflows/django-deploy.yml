@@ -9,6 +9,8 @@ jobs:
         name: Deploy django project to EC2
         runs-on: ubuntu-latest
         steps:
+            - name: Checkout Repository
+              uses: actions/checkout@v2
             - name: Get Github Actions IP
               id: ip
               uses: haythem/public-ip@v1.3
@@ -40,7 +42,7 @@ jobs:
                 script_stop: true
                 script: |
                     cd /home/ubuntu/GAMST
-                    docker pull ${{ secrets.DOCKERHUB_USERNAME }}/gamst-web 
+                    docker pull ${{ secrets.DOCKERHUB_USERNAME }}/gamst-web:latest 
                     docker-compose up -d
 
             - name: Revoke IP from SG
