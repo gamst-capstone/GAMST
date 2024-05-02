@@ -1,0 +1,11 @@
+version: "3"
+services:
+  web:
+    container_name: gamst-web
+    # image: gamst-web
+    image: omoknooni/gamst-web
+    volumes:
+      - .env:/app/.env
+    command: python manage.py runserver 0.0.0.0:8000
+    ports:
+      - 8000:8000
