@@ -163,3 +163,4 @@ cython_debug/
 # django
 db.sqlite3
 *.pyc
+static/
