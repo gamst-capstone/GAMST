@@ -200,37 +200,28 @@ class StreamRiskList(APIView):
     # 마지막에 추가된 row 반환
     @sync_to_async
     def get_queryset(self, last_object_id):
-        if not last_object_id:
-            queryset = RiskySection.objects.filter(
-                video=self.kwargs['pk']
-            ).order_by('id').values().first()
-            # print(f">>>>>>>> first row of {self.kwargs['pk']}")
-        else:
-            queryset = RiskySection.objects.filter(
-                video=self.kwargs['pk'],
-                id=last_object_id,
-                ).order_by('id').values().last()
-            # print(f">>>>>>>> {self.kwargs['pk']} / {last_object_id}")
-        return queryset
+        queryset = RiskySection.objects.filter(video=self.kwargs['pk'])
+        if last_object_id:
+            queryset = queryset.filter(id__gt=last_object_id)
+        # print(f"[^] {queryset} / {type(queryset)}")
+        return list(queryset.order_by('id').values())
 
     async def get_objects(self, last_object_id):
         await asyncio.sleep(1)
         result = await self.get_queryset(last_object_id)
-        # result = RiskySection.objects.filter(video=self.kwargs['pk']).last()
         if result:
-            # print(f"{result} / {last_object_id}")
             return result
         else:
-            # print('no result')
-            return {}
+            return []
 
     async def generate_object(self):
         last_object_id = None
         while True:
-            object = await self.get_objects(last_object_id)
-            if object:
-                yield f"data: {object}\n\n"
-                last_object_id = object['id'] + 1
+            objects = await self.get_objects(last_object_id)
+            if objects:
+                for object in objects:
+                    yield f"data: {object}\n\n"
+                last_object_id = objects[-1]['id']
 
     def get(self, request, pk):
         try:
