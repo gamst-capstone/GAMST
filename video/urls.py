@@ -13,8 +13,8 @@ urlpatterns = [
     path('stream/test/', views.sse_stream, name='sse_stream'),
 
     # Risky Sections
-    path('<int:pk>/stream/', views.StreamRiskList.as_view()),
-    path('<int:pk>/risk/', views.ListRiskList.as_view()),
+    path('<int:pk>/stream/', views.StreamRiskList.as_view(), name='stream_risk'),
+    path('<int:pk>/risk/', views.ListRisk.as_view(), name='list_risk'),
 
     path('test/', views.AuthTestView.as_view(), name='test'),
 ]

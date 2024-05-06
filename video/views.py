@@ -181,7 +181,7 @@ class StreamRiskList(APIView):
     renderer_classes = [ServerSentEventRenderer]
 
     @swagger_auto_schema(
-        operation_description='List stream risk',
+        operation_description='Stream risk',
         manual_parameters=[
             openapi.Parameter(
                 'video_id',
@@ -197,7 +197,6 @@ class StreamRiskList(APIView):
         }
     )
 
-    # 마지막에 추가된 row 반환
     @sync_to_async
     def get_queryset(self, last_object_id):
         queryset = RiskySection.objects.filter(video=self.kwargs['pk'])
@@ -232,7 +231,7 @@ class StreamRiskList(APIView):
         except Exception as e:
             return Response({'Error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-class ListRiskList(APIView):
+class ListRisk(APIView):
     pagination_class = PageNumberPagination
     @swagger_auto_schema(
         operation_description='List risk',

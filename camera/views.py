@@ -9,7 +9,7 @@ from rest_framework import status
 from django.http import StreamingHttpResponse
 
 from .models import Camera, Caption, RiskySection
-from .serializers import CameraSerializer, CaptionSerializer
+from .serializers import CameraSerializer, CaptionSerializer, RiskSerializer
 from config.settings import AWS_ACCESS_KEY, AWS_SECRET_ACCESS_KEY
 from config.sse_render import ServerSentEventRenderer
 
@@ -141,66 +141,84 @@ class ListCaption(APIView):
         except Exception as e:
             return Response({'Error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-# class StreamRiskList(APIView):
-#     renderer_classes = [ServerSentEventRenderer]
+class StreamRiskList(APIView):
+    renderer_classes = [ServerSentEventRenderer]
 
-#     @swagger_auto_schema(
-#         operation_description='List stream risk',
-#         manual_parameters=[
-#             openapi.Parameter(
-#                 'video_id',
-#                 openapi.IN_PATH,
-#                 description='video id',
-#                 type=openapi.TYPE_INTEGER,
-#                 required=True,
-#             )
-#         ],
-#         responses={
-#             200: 'Success',
-#             400: 'Bad Request',
-#         }
-#     )
+    @swagger_auto_schema(
+        operation_description='Stream risk',
+        manual_parameters=[
+            openapi.Parameter(
+                'camera_id',
+                openapi.IN_PATH,
+                description='camera id',
+                type=openapi.TYPE_INTEGER,
+                required=True,
+            )
+        ],
+        responses={
+            200: 'Success',
+            400: 'Bad Request',
+        }
+    )
 
-#     # 마지막에 추가된 row 반환
-#     @sync_to_async
-#     def get_queryset(self, last_object_id):
-#         if not last_object_id:
-#             queryset = RiskySection.objects.filter(
-#                 video=self.kwargs['pk']
-#             ).order_by('id').values().first()
-#             print(f">>>>>>>> first row of {self.kwargs['pk']}")
-#         else:
-#             queryset = RiskySection.objects.filter(
-#                 video=self.kwargs['pk'],
-#                 id=last_object_id,
-#                 ).order_by('id').values().last()
-#             print(f">>>>>>>> {self.kwargs['pk']} / {last_object_id}")
-#         return queryset
+    @sync_to_async
+    def get_queryset(self, last_object_id):
+        queryset = RiskySection.objects.filter(camera=self.kwargs['pk'])
+        if last_object_id:
+            queryset = queryset.filter(id__gt=last_object_id)
+        # print(f"[^] {queryset} / {type(queryset)}")
+        return list(queryset.order_by('id').values())
 
-#     async def get_objects(self, last_object_id):
-#         await asyncio.sleep(1)
-#         result = await self.get_queryset(last_object_id)
-#         # result = RiskySection.objects.filter(video=self.kwargs['pk']).last()
-#         if result:
-#             print(f"{result} / {last_object_id}")
-#             return result
-#         else:
-#             print('no result')
-#             return {}
+    async def get_objects(self, last_object_id):
+        await asyncio.sleep(1)
+        result = await self.get_queryset(last_object_id)
+        if result:
+            return result
+        else:
+            return []
 
-#     async def generate_object(self):
-#         last_object_id = None
-#         while True:
-#             object = await self.get_objects(last_object_id)
-#             if object:
-#                 yield f"data: {object}\n\n"
-#                 last_object_id = object['id'] + 1
+    async def generate_object(self):
+        last_object_id = None
+        while True:
+            objects = await self.get_objects(last_object_id)
+            if objects:
+                for object in objects:
+                    yield f"data: {object}\n\n"
+                last_object_id = objects[-1]['id']
 
-#     def get(self, request, pk):
-#         try:
-#             response = StreamingHttpResponse(self.generate_object(), content_type='text/event-stream')
-#             response['Cache-Control'] = 'no-cache'
-#             response['Connection'] = 'keep-alive'
-#             return response
-#         except Exception as e:
-#             return Response({'Error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    def get(self, request, pk):
+        try:
+            response = StreamingHttpResponse(self.generate_object(), content_type='text/event-stream')
+            response['Cache-Control'] = 'no-cache'
+            response['Connection'] = 'keep-alive'
+            return response
+        except Exception as e:
+            return Response({'Error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+class ListRisk(APIView):
+    pagination_class = PageNumberPagination
+    @swagger_auto_schema(
+        operation_description='List risk',
+        manual_parameters=[
+            openapi.Parameter(
+                'camera_id',
+                openapi.IN_PATH,
+                description='camera id',
+                type=openapi.TYPE_INTEGER,
+                required=True,
+            )
+        ],
+        responses={
+            200: 'Success',
+            400: 'Bad Request',
+        }
+    )
+    def get(self, request, pk):
+        try:
+            queryset = RiskySection.objects.filter(camera=pk).order_by('id')
+            paginator = self.pagination_class()
+            results = paginator.paginate_queryset(queryset, request)
+            serializer = RiskSerializer(results, many=True)
+            return paginator.get_paginated_response(serializer.data)
+        except Exception as e:
+            return Response({'Error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
