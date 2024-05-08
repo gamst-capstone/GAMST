@@ -12,11 +12,12 @@ from .serializers import VideoSerializer, CaptionSerializer, RiskSerializer
 from config.settings import AWS_ACCESS_KEY, AWS_SECRET_ACCESS_KEY, VIDEO_BUCKET
 from config.sse_render import ServerSentEventRenderer
 
-import boto3, uuid, asyncio
+import boto3, uuid, asyncio, json
 from rest_framework.decorators import api_view
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from asgiref.sync import sync_to_async
+from datetime import datetime
 
 
 @api_view(['GET'])
@@ -219,6 +220,7 @@ class StreamRiskList(APIView):
             objects = await self.get_objects(last_object_id)
             if objects:
                 for object in objects:
+                    object = json.dumps(object, cls=CustomJSONEncoder)
                     yield f"data: {object}\n\n"
                 last_object_id = objects[-1]['id']
 
@@ -259,7 +261,11 @@ class ListRisk(APIView):
         except Exception as e:
             return Response({'Error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-
+class CustomJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, datetime):
+            return obj.strftime('%Y-%m-%d %H:%M:%S')
+        return super().default(obj)
 
 
 import random
