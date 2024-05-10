@@ -11,6 +11,6 @@ urlpatterns = [
     path('<int:pk>/captions/', views.ListCaption.as_view(), name='list_caption'),
     
     # Risky Sections
-    path('<int:pk>/stream/', views.StreamRiskList.as_view(), name='stream_risk'),
+    path('stream/', views.StreamRiskList.as_view(), name='stream_risk'),
     path('<int:pk>/risk/', views.ListRisk.as_view(), name='list_risk'),
 ]

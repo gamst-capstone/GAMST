@@ -146,15 +146,6 @@ class StreamRiskList(APIView):
 
     @swagger_auto_schema(
         operation_description='Stream risk',
-        manual_parameters=[
-            openapi.Parameter(
-                'camera_id',
-                openapi.IN_PATH,
-                description='camera id',
-                type=openapi.TYPE_INTEGER,
-                required=True,
-            )
-        ],
         responses={
             200: 'Success',
             400: 'Bad Request',
@@ -163,7 +154,7 @@ class StreamRiskList(APIView):
 
     @sync_to_async
     def get_queryset(self, last_object_id):
-        queryset = RiskySection.objects.filter(camera=self.kwargs['pk'])
+        queryset = RiskySection.objects.all()
         if last_object_id:
             queryset = queryset.filter(id__gt=last_object_id)
         # print(f"[^] {queryset} / {type(queryset)}")
@@ -187,7 +178,7 @@ class StreamRiskList(APIView):
                     yield f"data: {object}\n\n"
                 last_object_id = objects[-1]['id']
 
-    def get(self, request, pk):
+    def get(self, request):
         try:
             response = StreamingHttpResponse(self.generate_object(), content_type='text/event-stream')
             response['Cache-Control'] = 'no-cache'
