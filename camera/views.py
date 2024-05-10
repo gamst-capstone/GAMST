@@ -11,9 +11,9 @@ from django.http import StreamingHttpResponse
 from .models import Camera, Caption, RiskySection
 from .serializers import CameraSerializer, CaptionSerializer, RiskSerializer
 from config.settings import AWS_ACCESS_KEY, AWS_SECRET_ACCESS_KEY
-from config.sse_render import ServerSentEventRenderer
+from config.sse_render import ServerSentEventRenderer, CustomJSONEncoder
 
-import boto3, uuid, asyncio
+import boto3, uuid, asyncio, json
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from urllib.parse import urlparse
@@ -183,6 +183,7 @@ class StreamRiskList(APIView):
             objects = await self.get_objects(last_object_id)
             if objects:
                 for object in objects:
+                    object = json.dumps(object, cls=CustomJSONEncoder)
                     yield f"data: {object}\n\n"
                 last_object_id = objects[-1]['id']
 

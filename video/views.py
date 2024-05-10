@@ -10,7 +10,7 @@ from django.shortcuts import render
 from .models import Video, Caption, RiskySection
 from .serializers import VideoSerializer, CaptionSerializer, RiskSerializer
 from config.settings import AWS_ACCESS_KEY, AWS_SECRET_ACCESS_KEY, VIDEO_BUCKET
-from config.sse_render import ServerSentEventRenderer
+from config.sse_render import ServerSentEventRenderer, CustomJSONEncoder
 
 import boto3, uuid, asyncio, json
 from rest_framework.decorators import api_view
@@ -260,12 +260,6 @@ class ListRisk(APIView):
             return paginator.get_paginated_response(serializer.data)
         except Exception as e:
             return Response({'Error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-class CustomJSONEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, datetime):
-            return obj.strftime('%Y-%m-%d %H:%M:%S')
-        return super().default(obj)
 
 
 import random
