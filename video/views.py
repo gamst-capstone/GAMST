@@ -127,16 +127,19 @@ def upload_to_s3(file, file_uid, bucket):
         aws_secret_access_key=AWS_SECRET_ACCESS_KEY
     )
 
+    # S3 event notification sends when file uploads in /video path
+    key = f"video/{file_uid}"
+
     try:
         res = s3.upload_fileobj(
             file,
             bucket,
-            file_uid,
+            key,
             ExtraArgs={
                 "ContentType": file.content_type
             }
         )
-        file_url = f"https://{bucket}.s3.amazonaws.com/{file_uid}"
+        file_url = f"https://{bucket}.s3.amazonaws.com/{key}"
         return {
             'video_url': file_url,
             'status': 'success'
