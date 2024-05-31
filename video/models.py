@@ -39,4 +39,5 @@ class RiskySection(models.Model):
     clip_url = models.URLField(max_length=200, null=True)
     start_frame = models.IntegerField()
     end_frame = models.IntegerField()
+    length = models.IntegerField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
